@@ -19,9 +19,10 @@
 //#define STASSID "automatedParkingProtoType"
 #define STASSID "linux"
 #define STAPSK "frankensteindcoster"
-#define Link ""
+#define Link "http://0e4402c0.ngrok.io"
+#define Route "/arduino/request/"
 #define ServerDelay 5000
-#define id "automatedParingAgent1"
+#define id "1automatedParingAgent1"
 
 
 
@@ -109,6 +110,8 @@ void loop()
     red();
   }
   checkDistance();
+  delay(5000);
+  sendServerRequest();
   
 
 }
@@ -147,7 +150,7 @@ void checkDistance()
   {
     spaceStatus = 4 ; // too close to sensor
   }
-  if(distance > 5)
+  if(distance < 5 && distance > 4)
   {
     spaceStatus = 1 ; // vehicle present
   }
@@ -156,6 +159,7 @@ void checkDistance()
 
 void red()
 {
+  bookedStatus = true;
   digitalWrite(greenLed , LOW);
   digitalWrite(redLed, HIGH);
 
@@ -164,11 +168,58 @@ void red()
 
 void green()
 {
+  bookedStatus = false;
   digitalWrite(redLed, LOW);
   digitalWrite(greenLed, HIGH);
 }
 
 void sendServerRequest()
 {
-  
+  HTTPClient http;
+  String final_link = String(Link) + String(Route);
+  String data = final_link + "?spaceStatus=" + String(spaceStatus) + "&booked=" + String(bookedStatus) +
+  "&id=" + String(id) + "&gateStatus=" + String(gateStatus);
+  http.begin(data);
+  int httpCode = http.GET();
+  String payload = http.getString();
+  if(httpCode > 0 )
+  {
+    if(payload == "TrueFalse")
+    {
+      red();
+      if(gateStatus == 1)
+      {
+        closeGate();
+      }
+    }
+    if(payload == "FalseFalse")
+    {
+      green();
+      if(gateStatus == 1)
+      {
+        closeGate();
+      }
+    }
+    if(payload == "TrueTrue")
+    {
+      red();
+      if(gateStatus == 0)
+      {
+        openGate();
+      }
+    }
+    if(payload == "FalseTrue")
+    {
+      green();
+      if(gateStatus == 0)
+      {
+        openGate(); 
+      }
+    }
+  }
+  else
+  {
+    Serial.println("failed to establish connection to the server");
+  }
+  http.end();
 }
