@@ -35,14 +35,17 @@ const int blueLed = 2;
 const int echoPin = 16;
 const int redLed = 15 ;
 const int greenLed = 13;
+const int gateOutput = 4;
 
 
 
 
 
 // define Variables
-float distance = 0 ;
-float duration ;
+float duration, distance ;
+int gateStatus;
+int spaceStatus ;
+boolean bookedStatus;
 
 
 
@@ -55,7 +58,9 @@ void setup()
   pinMode(redLed , OUTPUT);
   pinMode(greenLed, OUTPUT);
   pinMode(LED_BUILTIN, OUTPUT);
+  pinMode(gateOutput, OUTPUT);
   digitalWrite(blueLed, LOW);
+  bookedStatus = false;
   wifiConnect();
   if (WiFi.status() == WL_CONNECTED)
   {
@@ -95,8 +100,30 @@ void wifiConnect()
 
 void loop()
 {
+  if(!bookedStatus)
+  {
+    green();
+  }
+  else
+  {
+    red();
+  }
   checkDistance();
   
+
+}
+
+void openGate()
+{
+  Serial.println("Opening Gate");
+  digitalWrite(gateOutput, HIGH);
+  gateStatus = 1;
+}
+void closeGate()
+{
+  Serial.println("Closing Gate");
+  digitalWrite(gateOutput, LOW);
+  gateStatus = 0;
 }
 
 void checkDistance()
@@ -107,7 +134,23 @@ void checkDistance()
   duration = pulseIn(echoPin , HIGH);
   distance = ((duration / 2) / 29.1);
   Serial.println("The Distance is ");
-  Serial.print(distance);
+  Serial.println(distance);
+  if(distance > 1000)
+  {
+    spaceStatus = 3; // sensor dirty
+  }
+  if(distance > 10 )
+  {
+    spaceStatus = 0; // free space
+  }
+  if(distance < 4 )
+  {
+    spaceStatus = 4 ; // too close to sensor
+  }
+  if(distance > 5)
+  {
+    spaceStatus = 1 ; // vehicle present
+  }
 
 }
 
@@ -123,4 +166,9 @@ void green()
 {
   digitalWrite(redLed, LOW);
   digitalWrite(greenLed, HIGH);
+}
+
+void sendServerRequest()
+{
+  
 }
