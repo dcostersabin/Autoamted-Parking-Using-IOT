@@ -19,7 +19,7 @@
 //#define STASSID "automatedParkingProtoType"
 #define STASSID "linux"
 #define STAPSK "frankensteindcoster"
-#define Link "http://0e4402c0.ngrok.io"
+#define Link "http://df169b93.ngrok.io"
 #define Route "/arduino/request/"
 #define ServerDelay 5000
 #define id "1automatedParingAgent1"
@@ -45,7 +45,7 @@ const int gateOutput = 4;
 // define Variables
 float duration, distance ;
 int gateStatus;
-int spaceStatus ;
+int spaceStatus = 0 ;
 boolean bookedStatus;
 
 
@@ -101,6 +101,7 @@ void wifiConnect()
 
 void loop()
 {
+  checkDistance();
   if(!bookedStatus)
   {
     green();
@@ -109,7 +110,6 @@ void loop()
   {
     red();
   }
-  checkDistance();
   delay(5000);
   sendServerRequest();
   
@@ -138,19 +138,19 @@ void checkDistance()
   distance = ((duration / 2) / 29.1);
   Serial.println("The Distance is ");
   Serial.println(distance);
-  if(distance > 1000)
+  if(distance >= 500)
   {
     spaceStatus = 3; // sensor dirty
   }
-  if(distance > 10 )
+  else if(distance > 10 )
   {
     spaceStatus = 0; // free space
   }
-  if(distance < 4 )
+  else if(distance < 4 )
   {
     spaceStatus = 4 ; // too close to sensor
   }
-  if(distance < 5 && distance > 4)
+  else if(distance > 5 && distance < 8)
   {
     spaceStatus = 1 ; // vehicle present
   }
@@ -184,6 +184,7 @@ void sendServerRequest()
   String payload = http.getString();
   if(httpCode > 0 )
   {
+    Serial.println(payload);
     if(payload == "TrueFalse")
     {
       red();
